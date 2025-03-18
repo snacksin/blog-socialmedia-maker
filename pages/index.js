@@ -115,9 +115,10 @@ export default function Home() {
     setIsGenerating(true);
     
     try {
-      // In a real app, these would be API calls
+      // Call server-side API to generate brief
       await generateBrief(blogUrl);
     } catch (error) {
+      console.error('Brief generation error:', error);
       showToast(error.message || 'Failed to generate brief', 'error');
     } finally {
       setIsGenerating(false);
@@ -125,19 +126,51 @@ export default function Home() {
   };
 
   const generateBrief = async (url) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    // Mock response for demo purposes
-    const mockBrief = `
-HEADLINE: 5 Shocking Ways Coffee is Actually Changing Your Brain 🧠
-
-SNIPPET: New research reveals that your morning cup of coffee does more than just wake you up. Scientists have discovered that regular coffee consumption can enhance memory function and protect against neurodegenerative diseases.
-
-CTA: Try switching to cold brew coffee for even more brain benefits! Drop a ☕ in the comments if you're joining the brain-boosting coffee challenge.
-    `;
-    
-    displayBrief(mockBrief, url);
+    try {
+      // Step 1: Extract blog content using the server-side API
+      const extractResponse = await fetch('/api/brief/extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`
+        },
+        body: JSON.stringify({ url })
+      });
+      
+      if (!extractResponse.ok) {
+        const errorData = await extractResponse.json();
+        throw new Error(errorData.message || 'Failed to extract blog content');
+      }
+      
+      const blogData = await extractResponse.json();
+      
+      // Step 2: Generate social brief using the extracted content
+      const generateResponse = await fetch('/api/brief/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`
+        },
+        body: JSON.stringify({
+          title: blogData.title,
+          content: blogData.content,
+          url: blogData.url
+        })
+      });
+      
+      if (!generateResponse.ok) {
+        const errorData = await generateResponse.json();
+        throw new Error(errorData.message || 'Failed to generate social brief');
+      }
+      
+      const { brief } = await generateResponse.json();
+      
+      // Display the generated brief
+      displayBrief(brief, url);
+    } catch (error) {
+      console.error('Error in brief generation process:', error);
+      throw error; // Re-throw for the parent handler
+    }
   };
 
   const displayBrief = (briefText, originalUrl) => {
