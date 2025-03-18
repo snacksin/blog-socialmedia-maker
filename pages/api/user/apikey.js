@@ -22,20 +22,6 @@ async function authMiddleware(req) {
   }
 }
 
-// Simple encryption utilities (would be moved to a separate file)
-function encrypt(text) {
-  // In production, use a proper encryption method
-  // This is a simplified version for demonstration
-  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-  return Buffer.from(`${text}`).toString('base64');
-}
-
-function decrypt(text) {
-  // In production, use the corresponding decryption method
-  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-  return Buffer.from(`${text}`, 'base64').toString('ascii');
-}
-
 export default async function handler(req, res) {
   try {
     // Verify authentication
