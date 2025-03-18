@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog to Social Media</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gradient min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-12">
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-bold text-white mb-2">Blog to Social Media</h1>
+            <p class="text-xl text-white/80">Transform blog content into engaging Facebook posts</p>
+        </header>
+
+        <main>
+            <!-- Auth Section (Login/Register/API Key) -->
+            <div id="auth-section" class="glassmorphism p-6 rounded-2xl mb-8 max-w-md mx-auto">
+                <div id="logged-out-view">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Login or Register</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="email" class="block text-white mb-1">Email</label>
+                            <input type="email" id="email" class="glass-input" placeholder="your@email.com">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-white mb-1">Password</label>
+                            <input type="password" id="password" class="glass-input" placeholder="Your password">
+                        </div>
+                        <div class="flex space-x-4">
+                            <button id="login-btn" class="glass-button flex-1">Login</button>
+                            <button id="register-btn" class="glass-button flex-1">Register</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="logged-in-view" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">Welcome <span id="user-name">User</span></h2>
+                        <button id="logout-btn" class="text-sm text-white/70 hover:text-white">Logout</button>
+                    </div>
+                    
+                    <div id="api-key-section">
+                        <h3 class="text-lg font-semibold text-white mb-2">OpenAI API Key</h3>
+                        <div id="no-api-key" class="space-y-3">
+                            <p class="text-white/80 text-sm">You need to add your OpenAI API key to use this application.</p>
+                            <div>
+                                <input type="password" id="api-key-input" class="glass-input" placeholder="sk-...">
+                                <button id="save-api-key-btn" class="glass-button mt-2 w-full">Save API Key</button>
+                            </div>
+                        </div>
+                        <div id="has-api-key" class="hidden space-y-3">
+                            <p class="text-white/80 text-sm">Your API key is stored securely.</p>
+                            <button id="change-api-key-btn" class="glass-button-outline text-sm">Change API Key</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- URL Input & Brief Generation -->
+            <div id="app-section" class="hidden">
+                <div class="glassmorphism p-6 rounded-2xl mb-8 max-w-3xl mx-auto">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Generate Social Media Brief</h2>
+                    <form id="url-form" class="space-y-4">
+                        <div>
+                            <label for="blog-url" class="block text-white mb-1">Blog URL</label>
+                            <input type="url" id="blog-url" class="glass-input" placeholder="https://example.com/blog-post" required>
+                        </div>
+                        <button type="submit" id="generate-btn" class="glass-button w-full">
+                            <span id="generate-btn-text">Generate Brief</span>
+                            <span id="generate-spinner" class="hidden">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Results Section -->
+                <div id="results-section" class="hidden glassmorphism p-6 rounded-2xl max-w-3xl mx-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">Your Social Media Brief</h2>
+                        <button id="copy-btn" class="glass-button-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="brief-content" class="text-white space-y-4 mb-4">
+                        <!-- Brief content will be inserted here -->
+                    </div>
+                    <div class="text-sm text-white/60 italic">
+                        <p>Original URL: <span id="original-url"></span></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="error-toast" class="fixed bottom-4 right-4 bg-red-500/80 text-white px-4 py-2 rounded-lg shadow-lg hidden">
+            Error message will appear here
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

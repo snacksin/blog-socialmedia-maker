@@ -1,0 +1,41 @@
+# Project Intelligence (.clinerules)
+
+## Code and Implementation Guidelines
+
+- Project uses a component-based architecture for modularity and extensibility
+- Platform-specific logic should be isolated in dedicated modules
+- Maintain separation between content analysis and platform transformation
+
+## User Preferences
+
+- To be discovered as the project progresses
+
+## Project-Specific Patterns
+
+- Social media platforms follow distinct patterns:
+  - Twitter/X: Character limits, hashtag importance, threading for longer content
+  - LinkedIn: Professional tone, longer-form content, industry-specific hashtags
+  - Instagram: Visual focus with supporting text, hashtag blocks
+  - Facebook: Mixed media, varied lengths, engagement-focused
+  - Pinterest: Visual with strong CTA, linked to source
+
+## Known Challenges
+
+- Social media APIs frequently change policies and endpoints
+- Different platforms require different authentication flows
+- Content optimization varies significantly between platforms
+- Image formatting requirements differ across platforms
+
+## Workflow Patterns
+
+- Incremental development with focus on one platform integration at a time
+- Test-driven development for transformation algorithms
+- Regular user feedback to validate transformation quality
+
+## Tool Usage
+
+- Document all API rate limits and restrictions
+- Use staging environments for testing platform integrations
+- Establish local test data for consistent development
+
+*This document captures learned patterns and intelligence specific to this project. It will grow over time as we discover new insights through implementation and testing.*
