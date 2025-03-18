@@ -1,6 +1,6 @@
 # Blog to Social Media
 
-A modern web application that transforms blog content into engaging Facebook social media briefs with viral headlines, text snippets, and calls to action.
+A modern Next.js web application that transforms blog content into engaging Facebook social media briefs with viral headlines, text snippets, and calls to action.
 
 ## Features
 
@@ -13,7 +13,7 @@ A modern web application that transforms blog content into engaging Facebook soc
 
 ## Tech Stack
 
-- **Frontend**: HTML, CSS, JavaScript with Tailwind CSS
+- **Frontend**: Next.js, React, Tailwind CSS
 - **Backend**: Vercel Serverless Functions
 - **Database**: Vercel Postgres
 - **AI**: OpenAI GPT-4.5
@@ -23,20 +23,26 @@ A modern web application that transforms blog content into engaging Facebook soc
 
 ```
 blog-to-social/
-├── api/                  # Vercel Serverless Functions
-│   ├── auth/             # Authentication endpoints
-│   ├── brief/            # Brief generation endpoints
-│   └── user/             # User management endpoints
-├── lib/                  # Utility functions
-│   ├── auth.js           # Authentication utilities
-│   ├── blog-extractor.js # Blog content extraction
-│   ├── encryption.js     # API key encryption
-│   └── openai.js         # OpenAI integration
-├── index.html            # Main application page
-├── styles.css            # Glassmorphism and UI styles
-├── script.js             # Client-side application logic
-├── package.json          # Dependencies and scripts
-└── vercel.json           # Vercel deployment configuration
+├── pages/               # Next.js pages and API routes
+│   ├── api/             # API endpoints (Serverless Functions)
+│   │   ├── auth/        # Authentication endpoints
+│   │   ├── brief/       # Brief generation endpoints
+│   │   └── user/        # User management endpoints
+│   ├── _app.js          # Next.js App component
+│   └── index.js         # Main page
+├── styles/              # CSS styles
+│   ├── globals.css      # Global styles and Glassmorphism
+│   └── Home.module.css  # Page-specific styles
+├── lib/                 # Utility functions
+│   ├── auth.js          # Authentication utilities
+│   ├── blog-extractor.js# Blog content extraction
+│   ├── encryption.js    # API key encryption
+│   └── openai.js        # OpenAI integration
+├── package.json         # Dependencies and scripts
+├── next.config.js       # Next.js configuration
+├── tailwind.config.js   # Tailwind CSS configuration
+├── postcss.config.js    # PostCSS configuration
+└── vercel.json          # Vercel deployment configuration
 ```
 
 ## Setup and Deployment
@@ -46,13 +52,14 @@ blog-to-social/
 - Node.js 18 or later
 - A Vercel account
 - An OpenAI API key
+- GitHub repository
 
 ### Local Development
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/blog-to-social-media.git
-   cd blog-to-social-media
+   git clone https://github.com/snacksin/blog-socialmedia-maker.git
+   cd blog-socialmedia-maker
    ```
 
 2. Install dependencies
@@ -76,18 +83,35 @@ blog-to-social/
 ### Deployment to Vercel
 
 1. Push your code to GitHub
+   ```
+   git push -u origin main
+   ```
 
-2. Connect your GitHub repository to Vercel
+2. Set Up Project in Vercel
+   - Go to [vercel.com](https://vercel.com/)
+   - Sign in with your GitHub account
+   - Click "Add New..." > "Project"
+   - Select "blog-socialmedia-maker" from your repositories
+   - Click "Deploy"
 
-3. Add the required environment variables in the Vercel dashboard:
-   - `JWT_SECRET`: A secure random string for JWT generation
-   - `ENCRYPTION_KEY`: A 32-byte key for API key encryption
+3. Configure Environment Variables
+   - After deployment, go to your project settings
+   - Navigate to "Environment Variables"
+   - Add the following required variables:
+   
+   a. **JWT_SECRET**:
+   - Generate using: `openssl rand -base64 32`
+   - This secures user authentication tokens
+   
+   b. **ENCRYPTION_KEY**:
+   - Generate using: `openssl rand -hex 16`
+   - Must be 32 hex characters (16 bytes) for AES-256 encryption
+   - Used to encrypt user's OpenAI API keys
 
-4. Deploy your application
-
-5. Set up Vercel Postgres:
-   - Create a Postgres database in the Vercel dashboard
-   - Vercel will automatically add the database connection variables to your project
+4. Set up Vercel Postgres:
+   - In Vercel dashboard, go to "Storage"
+   - Create a new Postgres database
+   - The connection details will be automatically added to your environment variables
 
 ## Database Schema
 
@@ -113,6 +137,12 @@ CREATE TABLE users (
 4. Click "Generate Brief" to create a social media brief
 5. Use the copy button to copy the generated brief to your clipboard
 6. Paste the brief into your Facebook post editor
+
+## Troubleshooting
+
+- **Build Errors**: If you encounter build errors related to missing modules, ensure that the lib files are properly located in both the project root and pages directory.
+- **API Key Issues**: Verify that your OpenAI API key is valid and has not reached its rate limit.
+- **Database Connection**: Check that your Vercel Postgres database is properly set up and connected.
 
 ## License
 
