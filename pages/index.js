@@ -138,7 +138,7 @@ export default function Home() {
       });
       
       if (!extractResponse.ok) {
-        const errorData = await extractResponse.json();
+        const errorData = await extractResponse.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to extract blog content');
       }
       
@@ -159,7 +159,7 @@ export default function Home() {
       });
       
       if (!generateResponse.ok) {
-        const errorData = await generateResponse.json();
+        const errorData = await generateResponse.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to generate social brief');
       }
       
