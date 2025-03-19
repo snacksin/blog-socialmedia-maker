@@ -1,7 +1,7 @@
 // API endpoint for extracting content from a blog URL
 
-import { authMiddleware } from '../../lib/auth';
-import { extractBlogContent } from '../../lib/blog-extractor';
+import { authMiddleware } from '../../utils/auth';
+import { extractBlogContent } from '../../utils/blog-extractor';
 
 /**
  * Handler for extracting blog content from a URL
