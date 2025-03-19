@@ -90,27 +90,14 @@ export default function Home() {
     }
     
     try {
-      // Call the API to save the key
-      const response = await fetch('/api/user/apikey', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.token}`
-        },
-        body: JSON.stringify({ apiKey })
-      });
+      // For the demo, we'll just store the API key in localStorage
+      // In a real app, we would call the API to store it securely
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to save API key');
-      }
+      // Skip API call for demo and use localStorage directly
+      localStorage.setItem('openai_api_key', apiKey);
       
       setAuthState(prev => ({ ...prev, hasApiKey: true }));
       saveAuthState();
-      
-      // Store the API key in localStorage for immediate use
-      // This is not secure but works for the demo
-      localStorage.setItem('openai_api_key', apiKey);
       
       showToast('API key saved successfully', 'success');
     } catch (error) {
