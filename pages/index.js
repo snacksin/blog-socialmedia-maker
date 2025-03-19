@@ -90,11 +90,31 @@ export default function Home() {
     }
     
     try {
-      // In a real app, this would call the API
+      // Call the API to save the key
+      const response = await fetch('/api/user/apikey', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authState.token}`
+        },
+        body: JSON.stringify({ apiKey })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to save API key');
+      }
+      
       setAuthState(prev => ({ ...prev, hasApiKey: true }));
       saveAuthState();
+      
+      // Store the API key in localStorage for immediate use
+      // This is not secure but works for the demo
+      localStorage.setItem('openai_api_key', apiKey);
+      
       showToast('API key saved successfully', 'success');
     } catch (error) {
+      console.error('Save API key error:', error);
       showToast(error.message || 'Failed to save API key', 'error');
     }
   };
@@ -113,10 +133,14 @@ export default function Home() {
     }
     
     setIsGenerating(true);
+    setBrief(null); // Clear previous results
     
     try {
-      // Call server-side API to generate brief
-      await generateBrief(blogUrl);
+      // Get the stored API key if available
+      const storedApiKey = localStorage.getItem('openai_api_key');
+      
+      // Call server-side API to generate brief with the API key if available
+      await generateBrief(blogUrl, storedApiKey);
     } catch (error) {
       console.error('Brief generation error:', error);
       showToast(error.message || 'Failed to generate brief', 'error');
@@ -125,48 +149,79 @@ export default function Home() {
     }
   };
 
-  const generateBrief = async (url) => {
+  const generateBrief = async (url, storedApiKey = null) => {
     try {
       // Step 1: Extract blog content using the server-side API
       const extractResponse = await fetch('/api/brief/extract', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.token}`
+          'Authorization': `Bearer ${authState.token || 'mock-jwt-token'}`
         },
         body: JSON.stringify({ url })
       });
       
+      // Handle non-OK responses
       if (!extractResponse.ok) {
-        const errorData = await extractResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to extract blog content');
+        let errorMessage = 'Failed to extract blog content';
+        try {
+          const errorData = await extractResponse.json();
+          if (errorData && errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (jsonError) {
+          console.error('Error parsing JSON from extract response:', jsonError);
+        }
+        throw new Error(errorMessage);
       }
       
-      const blogData = await extractResponse.json();
+      let blogData;
+      try {
+        blogData = await extractResponse.json();
+      } catch (jsonError) {
+        console.error('Error parsing extract response JSON:', jsonError);
+        throw new Error('Invalid response format from extract API');
+      }
       
       // Step 2: Generate social brief using the extracted content
       const generateResponse = await fetch('/api/brief/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authState.token}`
+          'Authorization': `Bearer ${authState.token || 'mock-jwt-token'}`
         },
         body: JSON.stringify({
           title: blogData.title,
           content: blogData.content,
-          url: blogData.url
+          url: blogData.url,
+          apiKey: storedApiKey // Pass the API key directly if needed
         })
       });
       
+      // Handle non-OK responses
       if (!generateResponse.ok) {
-        const errorData = await generateResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to generate social brief');
+        let errorMessage = 'Failed to generate social brief';
+        try {
+          const errorData = await generateResponse.json();
+          if (errorData && errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (jsonError) {
+          console.error('Error parsing JSON from generate response:', jsonError);
+        }
+        throw new Error(errorMessage);
       }
       
-      const { brief } = await generateResponse.json();
+      let responseData;
+      try {
+        responseData = await generateResponse.json();
+      } catch (jsonError) {
+        console.error('Error parsing generate response JSON:', jsonError);
+        throw new Error('Invalid response format from generate API');
+      }
       
       // Display the generated brief
-      displayBrief(brief, url);
+      displayBrief(responseData.brief, url);
     } catch (error) {
       console.error('Error in brief generation process:', error);
       throw error; // Re-throw for the parent handler
@@ -420,8 +475,8 @@ export default function Home() {
 
         {/* Error Toast */}
         {showError && (
-          <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg toast-animation ${
-            errorType === 'error' ? 'bg-red-500/80' : 'bg-green-500/80'
+          <div className={`fixed bottom-4 right-4 toast-animation ${
+            errorType === 'error' ? 'toast-error' : errorType === 'success' ? 'toast-success' : 'toast-info'
           } text-white`}>
             {errorMessage}
           </div>
