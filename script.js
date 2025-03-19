@@ -1,7 +1,7 @@
 // Blog to Social Media App - Main JavaScript
 
 // Main API endpoints (to be implemented with Vercel)
-const API_BASE_URL = 'https://blog-to-social.vercel.app/api'; // Replace with your Vercel deployment URL
+const API_BASE_URL = '/api'; // Use relative path for local development
 const ENDPOINTS = {
   register: `${API_BASE_URL}/auth/register`,
   login: `${API_BASE_URL}/auth/login`,
