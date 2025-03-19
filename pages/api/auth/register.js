@@ -1,11 +1,10 @@
 // Register API Endpoint
-// This would be deployed as a serverless function on Vercel
-
 import { sql } from '@vercel/postgres';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { withSessionRoute } from '../../../lib/session';
+import { createToken } from '../../../utils/auth';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -34,19 +33,24 @@ export default async function handler(req, res) {
 
     // Create user
     const result = await sql`
-      INSERT INTO users (name, email, password)
+      INSERT INTO users (name, email, password_hash)
       VALUES (${name}, ${email}, ${hashedPassword})
       RETURNING id, name, email
     `;
 
     const user = result.rows[0];
 
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: user.id },
-      process.env.JWT_SECRET || 'development-jwt-secret',
-      { expiresIn: '7d' }
-    );
+    // Set the user data in the session
+    req.session.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    };
+
+    await req.session.save();
+
+    // Generate JWT for API access
+    const token = createToken(user);
 
     // Return user and token
     return res.status(201).json({
@@ -54,7 +58,8 @@ export default async function handler(req, res) {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        hasApiKey: false
       }
     });
   } catch (error) {
@@ -62,3 +67,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Server error' });
   }
 }
+
+export default withSessionRoute(handler);

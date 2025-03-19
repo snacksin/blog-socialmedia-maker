@@ -17,6 +17,7 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  color: white; /* Make all text white by default */
 }
 
 a {
@@ -26,6 +27,12 @@ a {
 
 * {
   box-sizing: border-box;
+  color: white; /* Ensure all elements have white text */
+}
+
+/* Override any other text colors in the app */
+p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select, option, label {
+  color: white;
 }
 
 /* Background Gradient */

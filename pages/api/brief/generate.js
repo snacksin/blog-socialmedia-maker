@@ -15,8 +15,8 @@ async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const userId = req.user?.userId;
-  const { title, content, url, apiKey: requestApiKey } = req.body;
+  const userId = req.user.id;
+  const { title, content, url } = req.body;
 
   // Validate input
   if (!title || !content || !url) {
@@ -26,39 +26,31 @@ async function handler(req, res) {
   }
 
   try {
-    let apiKey = requestApiKey;
+    // Get user's OpenAI API key from database
+    const result = await sql`
+      SELECT api_key FROM users WHERE id = ${userId}
+    `;
 
-    // Only try to get API key from database if no API key was provided in the request
-    // and we have a valid user ID
-    if (!apiKey && userId) {
-      try {
-        // Get user's OpenAI API key from database
-        const result = await sql`
-          SELECT api_key FROM users WHERE id = ${userId}
-        `;
-
-        const user = result.rows[0];
-        
-        if (user && user.api_key) {
-          // Decrypt the API key
-          apiKey = decrypt(user.api_key);
-          
-          if (!apiKey) {
-            return res.status(500).json({ 
-              message: 'Failed to decrypt API key' 
-            });
-          }
-        }
-      } catch (dbError) {
-        console.error('Database error when retrieving API key:', dbError);
-        // Continue with API key from request if database access fails
-      }
+    const user = result.rows[0];
+    
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found' 
+      });
     }
-
-    // Final check if we have an API key from any source
-    if (!apiKey) {
+    
+    if (!user.api_key) {
       return res.status(400).json({ 
         message: 'No API key found. Please add your OpenAI API key in settings.' 
+      });
+    }
+
+    // Decrypt the API key
+    const apiKey = decrypt(user.api_key);
+
+    if (!apiKey) {
+      return res.status(500).json({ 
+        message: 'Failed to decrypt API key' 
       });
     }
 

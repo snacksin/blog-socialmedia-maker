@@ -1,15 +1,22 @@
 // API Key Management Endpoint
-// This would be deployed as a serverless function on Vercel
-
 import { sql } from '@vercel/postgres';
 import { encrypt, decrypt } from '../../../utils/encryption';
 import { authMiddleware } from '../../../utils/auth';
 
-export default async function handler(req, res) {
+/**
+ * Handler for API key management
+ * - GET: Check if the user has an API key
+ * - POST: Save an API key
+ * - DELETE: Remove an API key
+ */
+async function handler(req, res) {
   try {
-    // Verify authentication
-    await authMiddleware(req);
-    const userId = req.user.userId;
+    // Get the user ID from the session
+    const userId = req.user.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
 
     // Handle GET request - Check if user has API key
     if (req.method === 'GET') {
@@ -18,8 +25,13 @@ export default async function handler(req, res) {
       `;
 
       const user = result.rows[0];
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
       return res.status(200).json({ 
-        hasKey: !!user?.api_key 
+        hasKey: !!user.api_key 
       });
     }
 
@@ -29,6 +41,10 @@ export default async function handler(req, res) {
       
       if (!apiKey) {
         return res.status(400).json({ message: 'API key is required' });
+      }
+      
+      if (!apiKey.startsWith('sk-')) {
+        return res.status(400).json({ message: 'Invalid API key format' });
       }
       
       // Encrypt the API key before storing
@@ -60,10 +76,13 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('API key endpoint error:', error);
     
-    if (error.message === 'Unauthorized' || error.message === 'Invalid token') {
-      return res.status(401).json({ message: error.message });
+    if (error.message.includes('Unauthorized') || error.message.includes('Invalid token')) {
+      return res.status(401).json({ message: 'Authentication required' });
     }
     
     return res.status(500).json({ message: 'Server error' });
   }
 }
+
+// Export the handler with authentication middleware
+export default authMiddleware(handler);
