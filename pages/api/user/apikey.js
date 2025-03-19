@@ -2,25 +2,8 @@
 // This would be deployed as a serverless function on Vercel
 
 import { sql } from '@vercel/postgres';
-import { encrypt, decrypt } from '../../../lib/encryption';
-
-// Middleware to verify JWT
-async function authMiddleware(req) {
-  const token = req.headers.authorization?.split(' ')[1];
-  
-  if (!token) {
-    throw new Error('Unauthorized');
-  }
-
-  try {
-    // This would use jwt.verify in production
-    const decoded = { userId: '123456' }; // Mocked for demonstration
-    req.user = decoded;
-    return true;
-  } catch (error) {
-    throw new Error('Invalid token');
-  }
-}
+import { encrypt, decrypt } from '../../../utils/encryption';
+import { authMiddleware } from '../../../utils/auth';
 
 export default async function handler(req, res) {
   try {
