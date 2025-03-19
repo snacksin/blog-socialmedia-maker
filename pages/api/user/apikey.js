@@ -2,7 +2,7 @@
 // This would be deployed as a serverless function on Vercel
 
 import { sql } from '@vercel/postgres';
-import { encrypt, decrypt } from '../../lib/encryption';
+import { encrypt, decrypt } from '../../../lib/encryption';
 
 // Middleware to verify JWT
 async function authMiddleware(req) {

@@ -2,7 +2,7 @@
 // This isolates the JSDOM usage to the server where Node.js modules are available
 
 import { JSDOM } from 'jsdom';
-import { authMiddleware } from '../../lib/auth';
+import { authMiddleware } from '../../../lib/auth';
 
 /**
  * Handler for extracting blog content from a URL

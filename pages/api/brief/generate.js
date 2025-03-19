@@ -1,9 +1,9 @@
 // API endpoint for generating social media briefs
 
 import { sql } from '@vercel/postgres';
-import { authMiddleware } from '../../lib/auth';
-import { decrypt } from '../../lib/encryption';
-import { initializeOpenAI, generateSocialBrief } from '../../lib/openai';
+import { authMiddleware } from '../../../lib/auth';
+import { decrypt } from '../../../lib/encryption';
+import { initializeOpenAI, generateSocialBrief } from '../../../lib/openai';
 
 /**
  * Handler for generating social media briefs from blog content
