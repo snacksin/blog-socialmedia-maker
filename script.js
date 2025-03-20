@@ -111,18 +111,50 @@ async function handleLogin() {
   }
   
   try {
-    // Temporary mock implementation for demo
-    // In production, this would call the login API endpoint
-    mockAuthResponse({
-      email,
-      name: email.split('@')[0], // Just use part of email as name for demo
-      id: '123456'
+    // Call the login API endpoint
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password }),
+      credentials: 'include' // Important for cookies
     });
     
-    // Check if the API key exists
-    checkApiKey();
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Login failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Save auth state with the returned user and token
+    authState = {
+      isLoggedIn: true,
+      user: data.user,
+      token: data.token,
+      hasApiKey: !!data.user.hasApiKey
+    };
+    
+    saveAuthState();
+    updateAuthUI();
+    
+    // Show success message
+    showError('Logged in successfully', 'success');
   } catch (error) {
-    showError(error.message || 'Login failed');
+    console.error('Login error:', error);
+    
+    // For development, if API call fails, use mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using mock auth for development');
+      mockAuthResponse({
+        email,
+        name: email.split('@')[0],
+        id: '123456'
+      });
+    } else {
+      showError(error.message || 'Login failed');
+    }
   }
 }
 
@@ -136,15 +168,54 @@ async function handleRegister() {
   }
   
   try {
-    // Temporary mock implementation for demo
-    // In production, this would call the register API endpoint
-    mockAuthResponse({
-      email,
-      name: email.split('@')[0], // Just use part of email as name for demo
-      id: '123456'
+    // Call the register API endpoint
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name: email.split('@')[0] // Default name from email
+      }),
+      credentials: 'include' // Important for cookies
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Registration failed: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Save auth state with the returned user and token
+    authState = {
+      isLoggedIn: true,
+      user: data.user,
+      token: data.token,
+      hasApiKey: false // New users don't have an API key yet
+    };
+    
+    saveAuthState();
+    updateAuthUI();
+    
+    // Show success message
+    showError('Registered successfully', 'success');
   } catch (error) {
-    showError(error.message || 'Registration failed');
+    console.error('Registration error:', error);
+    
+    // For development, if API call fails, use mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using mock auth for development');
+      mockAuthResponse({
+        email,
+        name: email.split('@')[0],
+        id: '123456'
+      });
+    } else {
+      showError(error.message || 'Registration failed');
+    }
   }
 }
 
@@ -163,14 +234,42 @@ async function handleSaveApiKey() {
   }
   
   try {
-    // Temporary mock implementation for demo
-    // In production, this would call the save API key endpoint
+    // Call the save API key endpoint
+    const response = await fetch('/api/user/apikey', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authState.token}`
+      },
+      body: JSON.stringify({ apiKey })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to save API key: ${response.status}`);
+    }
+    
+    // Update auth state
     authState.hasApiKey = true;
     saveAuthState();
     updateAuthUI();
     showError('API key saved successfully', 'success');
+    
+    // Clear the input field for security
+    elements.apiKeyInput.value = '';
   } catch (error) {
-    showError(error.message || 'Failed to save API key');
+    console.error('Save API key error:', error);
+    
+    // For development, if API call fails, use mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using mock API key management for development');
+      authState.hasApiKey = true;
+      saveAuthState();
+      updateAuthUI();
+      showError('API key saved successfully (mock)', 'success');
+    } else {
+      showError(error.message || 'Failed to save API key');
+    }
   }
 }
 
@@ -180,9 +279,40 @@ function handleChangeApiKey() {
 }
 
 async function checkApiKey() {
-  // Temporary mock implementation for demo
-  // In production, this would call the check API key endpoint
-  return authState.hasApiKey;
+  try {
+    // Call the check API key endpoint
+    const response = await fetch('/api/user/apikey', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${authState.token}`
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error(`Failed to check API key: ${errorData.message || response.status}`);
+      return false;
+    }
+    
+    const data = await response.json();
+    
+    // Update auth state with the result
+    authState.hasApiKey = !!data.hasKey;
+    saveAuthState();
+    updateAuthUI();
+    
+    return authState.hasApiKey;
+  } catch (error) {
+    console.error('Check API key error:', error);
+    
+    // For development, if API call fails, return the stored value
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using mock API key check for development');
+      return authState.hasApiKey;
+    }
+    
+    return false;
+  }
 }
 
 // Brief Generation Functions
@@ -210,19 +340,66 @@ async function handleUrlSubmit(e) {
 }
 
 async function generateBrief(url) {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  
-  // Mock response for demo purposes
-  const mockBrief = `
+  try {
+    // First, extract content from the blog URL
+    const extractResponse = await fetch('/api/brief/extract', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authState.token}`
+      },
+      body: JSON.stringify({ url })
+    });
+    
+    if (!extractResponse.ok) {
+      const errorData = await extractResponse.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to extract content: ${extractResponse.status}`);
+    }
+    
+    const blogData = await extractResponse.json();
+    console.log('Extracted blog data:', blogData);
+    
+    // Then, generate a social brief using the extracted content
+    const generateResponse = await fetch('/api/brief/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authState.token}`
+      },
+      body: JSON.stringify({
+        title: blogData.title,
+        content: blogData.content,
+        url: blogData.url || url
+      })
+    });
+    
+    if (!generateResponse.ok) {
+      const errorData = await generateResponse.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to generate brief: ${generateResponse.status}`);
+    }
+    
+    const { brief } = await generateResponse.json();
+    
+    // Display the generated brief
+    displayBrief(brief, url);
+  } catch (error) {
+    console.error('Error generating brief:', error);
+    showError(error.message || 'Failed to generate brief');
+    // For development, if API calls fail, fallback to mock data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using mock data as fallback');
+      const mockBrief = `
 HEADLINE: 5 Shocking Ways Coffee is Actually Changing Your Brain 🧠
 
 SNIPPET: New research reveals that your morning cup of coffee does more than just wake you up. Scientists have discovered that regular coffee consumption can enhance memory function and protect against neurodegenerative diseases.
 
 CTA: Try switching to cold brew coffee for even more brain benefits! Drop a ☕ in the comments if you're joining the brain-boosting coffee challenge.
-  `;
-  
-  displayBrief(mockBrief, url);
+      `;
+      displayBrief(mockBrief, url);
+    }
+  } finally {
+    setGeneratingState(false);
+  }
 }
 
 function displayBrief(briefText, originalUrl) {

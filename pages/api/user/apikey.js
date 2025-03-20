@@ -1,7 +1,7 @@
 // API Key Management Endpoint
-import { sql } from '@vercel/postgres';
 import { encrypt, decrypt } from '../../../utils/encryption';
 import { authMiddleware } from '../../../utils/auth';
+import { query, sql, testConnection } from '../../../lib/db.esm';
 
 /**
  * Handler for API key management
@@ -11,6 +11,12 @@ import { authMiddleware } from '../../../utils/auth';
  */
 async function handler(req, res) {
   try {
+    // Ensure database connection is available
+    // This is a good place to test connection if there are issues
+    if (process.env.NODE_ENV === 'development') {
+      console.log('💡 API Key endpoint accessed');
+    }
+
     // Get the user ID from the session
     const userId = req.user.id;
     
@@ -20,19 +26,45 @@ async function handler(req, res) {
 
     // Handle GET request - Check if user has API key
     if (req.method === 'GET') {
-      const result = await sql`
-        SELECT api_key FROM users WHERE id = ${userId}
-      `;
+      try {
+        // Try using both our database methods for diagnostic purposes
+        const pgResult = await query(
+          'SELECT api_key FROM users WHERE id = $1',
+          [userId]
+        );
+        
+        // If pg query worked, we'll also try the Vercel client for comparison
+        const vercelResult = await sql`
+          SELECT api_key FROM users WHERE id = ${userId}
+        `;
 
-      const user = result.rows[0];
-      
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`📊 Database query results: PG rows: ${pgResult.rowCount}, Vercel rows: ${vercelResult.rowCount}`);
+        }
+
+        const user = pgResult.rows[0];
+        
+        if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+        }
+        
+        return res.status(200).json({
+          hasKey: !!user.api_key
+        });
+      } catch (dbError) {
+        console.error('Database error during API key GET:', dbError);
+        
+        // Try reconnecting to the database
+        const reconnected = await testConnection();
+        if (!reconnected) {
+          return res.status(503).json({
+            message: 'Database connection error',
+            details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+          });
+        }
+        
+        throw dbError; // Re-throw to be caught by outer catch
       }
-      
-      return res.status(200).json({ 
-        hasKey: !!user.api_key 
-      });
     }
 
     // Handle POST request - Save API key
@@ -47,28 +79,42 @@ async function handler(req, res) {
         return res.status(400).json({ message: 'Invalid API key format' });
       }
       
-      // Encrypt the API key before storing
-      const encryptedKey = encrypt(apiKey);
+      try {
+        // Encrypt the API key before storing
+        const encryptedKey = encrypt(apiKey);
 
-      // Update user record with encrypted API key
-      await sql`
-        UPDATE users 
-        SET api_key = ${encryptedKey}
-        WHERE id = ${userId}
-      `;
+        // Update user record with encrypted API key using our query function
+        await query(
+          'UPDATE users SET api_key = $1 WHERE id = $2',
+          [encryptedKey, userId]
+        );
 
-      return res.status(200).json({ message: 'API key saved successfully' });
+        return res.status(200).json({ message: 'API key saved successfully' });
+      } catch (dbError) {
+        console.error('Database error during API key POST:', dbError);
+        return res.status(503).json({
+          message: 'Failed to save API key',
+          details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        });
+      }
     }
 
     // Handle DELETE request - Remove API key
     if (req.method === 'DELETE') {
-      await sql`
-        UPDATE users 
-        SET api_key = NULL
-        WHERE id = ${userId}
-      `;
+      try {
+        await query(
+          'UPDATE users SET api_key = NULL WHERE id = $1',
+          [userId]
+        );
 
-      return res.status(200).json({ message: 'API key removed successfully' });
+        return res.status(200).json({ message: 'API key removed successfully' });
+      } catch (dbError) {
+        console.error('Database error during API key DELETE:', dbError);
+        return res.status(503).json({
+          message: 'Failed to remove API key',
+          details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+        });
+      }
     }
 
     // If method not supported
@@ -80,7 +126,10 @@ async function handler(req, res) {
       return res.status(401).json({ message: 'Authentication required' });
     }
     
-    return res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({
+      message: 'Server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 }
 
