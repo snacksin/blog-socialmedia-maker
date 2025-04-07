@@ -1,26 +1,652 @@
-@import "tailwindcss";
+@import "tailwindcss/preflight";
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 18, 18, 18;
+  --background-end-rgb: 26, 26, 26;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Enhanced Glassmorphism Variables */
+  --glass-base-bg-rgb: 25, 25, 25; /* Darker base for better contrast */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Variants */
+  --glass-primary-opacity: 0.6;
+  --glass-primary-blur: 20px;
+  --glass-secondary-opacity: 0.4;
+  --glass-secondary-blur: 12px;
+  --glass-tertiary-opacity: 0.25;
+  --glass-tertiary-blur: 8px;
+
+  /* Borders */
+  --glass-border-width: 1px;
+  --glass-border-color-start: rgba(255, 255, 255, 0.25);
+  --glass-border-color-end: rgba(255, 255, 255, 0.05);
+  --glass-border-gradient: linear-gradient(145deg, var(--glass-border-color-start), var(--glass-border-color-end));
+  --glass-inset-highlight: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12); /* Brighter inner highlight */
+
+  /* Shadows */
+  --glass-shadow-base: 0 10px 40px rgba(0, 0, 0, 0.5);
+  --glass-shadow-hover: 0 15px 50px rgba(0, 0, 0, 0.6);
+
+  /* Light Effects */
+  --light-refraction-color: rgba(255, 255, 255, 0.05);
+  --light-highlight-color: rgba(255, 255, 255, 0.15); /* Brighter top-left highlight */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  @apply min-h-screen; /* Ensure body takes full height - This @apply is valid */
+}
+
+/* Add consistent bottom margin to text elements */
+h1, h2, h3, p {
+  margin-bottom: 0.75rem; /* Adjust as needed */
+}
+
+/* Base Glassmorphism Style */
+.glass-effect {
+  position: relative; /* Needed for pseudo-elements */
+  overflow: hidden; /* Clip pseudo-elements */
+  border-radius: 1.5rem; /* Explicitly set rounded edges (rounded-3xl equivalent) */
+  padding: 1.5rem; /* Add padding for content */
+  box-shadow: var(--glass-shadow-base), var(--glass-inset-highlight);
+  transition: box-shadow 0.3s ease-out, transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Faster transform transition */
+  z-index: 1; /* Ensure content is above pseudo-elements */
+  backdrop-filter: blur(var(--glass-primary-blur));
+  -webkit-backdrop-filter: blur(var(--glass-primary-blur));
+}
+
+.glass-effect:hover {
+  box-shadow: var(--glass-shadow-hover), var(--glass-inset-highlight);
+  transform: translateY(-3px); /* Subtle lift effect on hover */
+}
+
+/* Pseudo-element for Gradient Border */
+.glass-effect::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--glass-border-width); /* Border width */
+  background: var(--glass-border-gradient);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box, /* Show gradient only at the border */
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; /* Punch hole in the middle */
+          mask-composite: exclude;
+  z-index: -1; /* Place behind content */
+  pointer-events: none; /* Allow interaction with content */
+}
+
+/* Pseudo-element for Light Refraction/Highlight */
+.glass-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150%; /* Wider to allow diagonal placement */
+    height: 100%;
+    background: linear-gradient(
+      110deg,
+      transparent 30%,
+      var(--light-refraction-color) 50%,
+      transparent 70%
+    );
+    /* Start off-screen, adjusted skew if needed */
+    transform: translateX(-100%) skewX(-20deg);
+    /* Apply continuous animation */
+    animation: animateRefraction 5s linear infinite;
+    z-index: -1; /* Behind content, potentially above border */
+    pointer-events: none;
+}
+
+/* Removed hover effect for ::after as animation is now continuous */
+
+
+/* Variant-specific styles */
+.glass-primary {
+  background-color: rgba(var(--glass-base-bg-rgb), var(--glass-primary-opacity));
+  backdrop-filter: blur(var(--glass-primary-blur));
+  -webkit-backdrop-filter: blur(var(--glass-primary-blur));
+}
+
+.glass-secondary {
+  background-color: rgba(var(--glass-base-bg-rgb), var(--glass-secondary-opacity));
+  backdrop-filter: blur(var(--glass-secondary-blur));
+  -webkit-backdrop-filter: blur(var(--glass-secondary-blur));
+}
+
+.glass-tertiary {
+  background-color: rgba(var(--glass-base-bg-rgb), var(--glass-tertiary-opacity));
+  backdrop-filter: blur(var(--glass-tertiary-blur));
+  -webkit-backdrop-filter: blur(var(--glass-tertiary-blur));
+}
+
+/* Apply .glass-effect and one of the variants (e.g., .glass-primary) to your components */
+/* Example Usage in Component: <div className="p-6 rounded-lg border border-transparent glass-effect glass-primary">...</div> */
+/* Note: border-transparent is used to reserve space for the pseudo-element border */
+
+/* Remove or comment out old .bento-item style if no longer needed */
+/*
+.bento-item {
+  background-color: rgba(var(--glass-bg-rgb), var(--glass-bg-opacity));
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-color: var(--glass-border-color);
+  box-shadow: var(--glass-shadow);
+}
+*/
+/* Bento Grid Layout Container */
+.bento-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Removed multi-column media queries to force single-column layout */
+
+/* Styles for items spanning multiple columns/rows */
+.bento-item-large {
+  grid-column: span 1;
+}
+
+/* Removed large item span media query */
+
+.bento-item-tall {
+  grid-row: span 2;
+}
+
+/* Additional effects for bento cards */
+.bento-grid > div {
+  transition: all 0.4s ease-out;
+}
+
+.bento-grid > div:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+/* Keyframes for continuous light refraction animation */
+@keyframes animateRefraction {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  100% {
+    /* Adjust end position to ensure smooth loop if needed */
+    transform: translateX(100%) skewX(-20deg);
+  }
+}
+
+
+/* Style adjustments for buttons */
+/* Main submit button */
+.bento-item-large form button[type="submit"] {
+  max-width: 200px;
+  width: 100%; /* Allow shrinking below 200px if container is smaller */
+  margin-left: auto;
+  margin-right: auto;
+  display: block; /* Center the button */
+  margin-top: 25px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-radius: 15px; 
+  overflow: hidden;
+}
+
+
+/* Final approach: Use multiple techniques for maximum compatibility */
+
+/* 1. Direct input styling with important flags and specific padding */
+.url-input {
+  padding: 16px 16px 16px 24px !important; /* More padding on the left */
+  box-sizing: border-box !important;
+  position: relative !important; /* For the pseudo-element approach */
+}
+
+/* 2. Style all placeholder variations with !important */
+/* Chrome, Safari, Opera */
+.url-input::-webkit-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* Firefox */
+.url-input::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* IE 10+ */
+.url-input:-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* Edge */
+.url-input::-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* Standard */
+.url-input::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* 3. Add a border indicator when placeholder is shown */
+.url-input:placeholder-shown {
+  border: 1px solid #ff6f3c !important;
+}
+
+/* 4. Fallback approach: Add a pseudo-element that creates visual padding for all browsers */
+.url-input {
+  background-clip: padding-box !important;
+}
+
+/* Add a distinct border to the input when the placeholder is visible */
+.url-input:placeholder-shown {
+  border: 1px solid #ff6f3c !important; /* Using the brand color for the border */
+}
+
+
+
+/* Styles for the Blog Content Textarea */
+.blog-textarea {
+  padding: 16px !important; /* Consistent padding */
+  box-sizing: border-box !important;
+  min-height: 20px; /* Ensure a minimum height */
+  resize: vertical; /* Allow vertical resizing */
+  height: 100px;
+}
+
+/* Style placeholder for textarea */
+.blog-textarea::-webkit-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+.blog-textarea::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+.blog-textarea:-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+.blog-textarea::-ms-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+.blog-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+}
+
+/* Styles for Generated Content Sections */
+.content-section {
+  /* Add space between headline and body sections if both are present */
+  margin-bottom: 1.5rem; /* Equivalent to space-y-6 in Tailwind */
+}
+
+.content-section:last-child {
+  margin-bottom: 0;
+}
+
+.generated-text {
+  /* Base styles are applied via Tailwind classes in page.tsx */
+  /* Ensure scrollbar looks decent if needed */
+  scrollbar-width: thin;
+  scrollbar-color: #555 #333;
+}
+
+.generated-text::-webkit-scrollbar {
+  width: 8px;
+}
+
+.generated-text::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 4px;
+}
+
+.generated-text::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 4px;
+  border: 2px solid #333;
+}
+
+/* Copy Button Styles */
+.copy-button {
+  /* Base styles applied via Tailwind in page.tsx */
+  /* Add focus state for accessibility */
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  width: 560px; 
+  height: 50px; 
+  border-radius: 15px !important; 
+  overflow: hidden;
+  padding:20px;
+}
+
+.copy-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.5); /* Focus ring using primary color */
+}
+
+.copy-button:active {
+  transform: scale(0.98);
+}
+
+/* Style for 'Copied!' state - subtle change */
+.copy-button:disabled, /* Assuming we might disable briefly after copy */
+.copy-button[aria-label*="Copied"] /* Target based on text content change */
+{
+  /* Slightly different gradient or opacity to indicate success */
+  background-image: linear-gradient(to right, #6a3380, #cc5930); /* Darker/muted gradient */
+  cursor: default;
+}
+
+
+
+/* From Uiverse.io by Nawsome */ 
+.wheel-and-hamster {
+  --dur: 1s;
+  position: relative;
+  width: 12em;
+  height: 12em;
+  font-size: 14px;
+}
+
+.wheel,
+.hamster,
+.hamster div,
+.spoke {
+  position: absolute;
+}
+
+.wheel,
+.spoke {
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wheel {
+  background: radial-gradient(100% 100% at center,hsla(0,0%,60%,0) 47.8%,hsl(0,0%,60%) 48%);
+  z-index: 2;
+}
+
+.hamster {
+  animation: hamster var(--dur) ease-in-out infinite;
+  top: 50%;
+  left: calc(50% - 3.5em);
+  width: 7em;
+  height: 3.75em;
+  transform: rotate(4deg) translate(-0.8em,1.85em);
+  transform-origin: 50% 0;
+  z-index: 1;
+}
+
+.hamster__head {
+  animation: hamsterHead var(--dur) ease-in-out infinite;
+  background: hsl(30,90%,55%);
+  border-radius: 70% 30% 0 100% / 40% 25% 25% 60%;
+  box-shadow: 0 -0.25em 0 hsl(30,90%,80%) inset,
+		0.75em -1.55em 0 hsl(30,90%,90%) inset;
+  top: 0;
+  left: -2em;
+  width: 2.75em;
+  height: 2.5em;
+  transform-origin: 100% 50%;
+}
+
+.hamster__ear {
+  animation: hamsterEar var(--dur) ease-in-out infinite;
+  background: hsl(0,90%,85%);
+  border-radius: 50%;
+  box-shadow: -0.25em 0 hsl(30,90%,55%) inset;
+  top: -0.25em;
+  right: -0.25em;
+  width: 0.75em;
+  height: 0.75em;
+  transform-origin: 50% 75%;
+}
+
+.hamster__eye {
+  animation: hamsterEye var(--dur) linear infinite;
+  background-color: hsl(0,0%,0%);
+  border-radius: 50%;
+  top: 0.375em;
+  left: 1.25em;
+  width: 0.5em;
+  height: 0.5em;
+}
+
+.hamster__nose {
+  background: hsl(0,90%,75%);
+  border-radius: 35% 65% 85% 15% / 70% 50% 50% 30%;
+  top: 0.75em;
+  left: 0;
+  width: 0.2em;
+  height: 0.25em;
+}
+
+.hamster__body {
+  animation: hamsterBody var(--dur) ease-in-out infinite;
+  background: hsl(30,90%,90%);
+  border-radius: 50% 30% 50% 30% / 15% 60% 40% 40%;
+  box-shadow: 0.1em 0.75em 0 hsl(30,90%,55%) inset,
+		0.15em -0.5em 0 hsl(30,90%,80%) inset;
+  top: 0.25em;
+  left: 2em;
+  width: 4.5em;
+  height: 3em;
+  transform-origin: 17% 50%;
+  transform-style: preserve-3d;
+}
+
+.hamster__limb--fr,
+.hamster__limb--fl {
+  clip-path: polygon(0 0,100% 0,70% 80%,60% 100%,0% 100%,40% 80%);
+  top: 2em;
+  left: 0.5em;
+  width: 1em;
+  height: 1.5em;
+  transform-origin: 50% 0;
+}
+
+.hamster__limb--fr {
+  animation: hamsterFRLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,80%) 80%,hsl(0,90%,75%) 80%);
+  transform: rotate(15deg) translateZ(-1px);
+}
+
+.hamster__limb--fl {
+  animation: hamsterFLLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,90%) 80%,hsl(0,90%,85%) 80%);
+  transform: rotate(15deg);
+}
+
+.hamster__limb--br,
+.hamster__limb--bl {
+  border-radius: 0.75em 0.75em 0 0;
+  clip-path: polygon(0 0,100% 0,100% 30%,70% 90%,70% 100%,30% 100%,40% 90%,0% 30%);
+  top: 1em;
+  left: 2.8em;
+  width: 1.5em;
+  height: 2.5em;
+  transform-origin: 50% 30%;
+}
+
+.hamster__limb--br {
+  animation: hamsterBRLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,80%) 90%,hsl(0,90%,75%) 90%);
+  transform: rotate(-25deg) translateZ(-1px);
+}
+
+.hamster__limb--bl {
+  animation: hamsterBLLimb var(--dur) linear infinite;
+  background: linear-gradient(hsl(30,90%,90%) 90%,hsl(0,90%,85%) 90%);
+  transform: rotate(-25deg);
+}
+
+.hamster__tail {
+  animation: hamsterTail var(--dur) linear infinite;
+  background: hsl(0,90%,85%);
+  border-radius: 0.25em 50% 50% 0.25em;
+  box-shadow: 0 -0.2em 0 hsl(0,90%,75%) inset;
+  top: 1.5em;
+  right: -0.5em;
+  width: 1em;
+  height: 0.5em;
+  transform: rotate(30deg) translateZ(-1px);
+  transform-origin: 0.25em 0.25em;
+}
+
+.spoke {
+  animation: spoke var(--dur) linear infinite;
+  background: radial-gradient(100% 100% at center,hsl(0,0%,60%) 4.8%,hsla(0,0%,60%,0) 5%),
+		linear-gradient(hsla(0,0%,55%,0) 46.9%,hsl(0,0%,65%) 47% 52.9%,hsla(0,0%,65%,0) 53%) 50% 50% / 99% 99% no-repeat;
+}
+
+/* Animations */
+@keyframes hamster {
+  from, to {
+    transform: rotate(4deg) translate(-0.8em,1.85em);
+  }
+
+  50% {
+    transform: rotate(0) translate(-0.8em,1.85em);
+  }
+}
+
+@keyframes hamsterHead {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(0);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes hamsterEye {
+  from, 90%, to {
+    transform: scaleY(1);
+  }
+
+  95% {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes hamsterEar {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(0);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(12deg);
+  }
+}
+
+@keyframes hamsterBody {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(0);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(-2deg);
+  }
+}
+
+@keyframes hamsterFRLimb {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(50deg) translateZ(-1px);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(-30deg) translateZ(-1px);
+  }
+}
+
+@keyframes hamsterFLLimb {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(-30deg);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(50deg);
+  }
+}
+
+@keyframes hamsterBRLimb {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(-60deg) translateZ(-1px);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(20deg) translateZ(-1px);
+  }
+}
+
+@keyframes hamsterBLLimb {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(20deg);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(-60deg);
+  }
+}
+
+@keyframes hamsterTail {
+  from, 25%, 50%, 75%, to {
+    transform: rotate(30deg) translateZ(-1px);
+  }
+
+  12.5%, 37.5%, 62.5%, 87.5% {
+    transform: rotate(10deg) translateZ(-1px);
+  }
+}
+
+@keyframes spoke {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(-1turn);
+  }
 }
